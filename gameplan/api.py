@@ -6,6 +6,13 @@ import gameplan
 import frappe
 from frappe.utils import validate_email_address, split_emails, cstr
 from gameplan.utils import validate_type
+from frappe.desk.form.assign_to import add as add_assignment
+
+
+@frappe.whitelist(allow_guest=True)
+def add_assignee():
+	add_assignment({"assign_to": ["muzammal.rasool1079@gmail.com"], "doctype": "GP Discussion", "name": '14'})
+	return True
 
 
 @frappe.whitelist(allow_guest=True)

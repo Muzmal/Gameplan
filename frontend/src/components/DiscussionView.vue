@@ -143,20 +143,30 @@
           <button
             class="flex rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 leading-4"
           >
-            Status : &nbsp <TaskStatusIcon :status=discussion.status /> &nbsp {{ discussion.status || 'Set status'}} &nbsp 
           </button>
         </div>
-        <div v-if="editingContent">
+        <div>
           Status : 
           <Dropdown :options="statusOptions">
                   <Button>
                     <button
                         class="flex rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
                       >
-                        <TaskStatusIcon :status=this.status /> &nbsp {{ this.status || 'Set status'}} &nbsp 
+                        <TaskStatusIcon :status=this.status /> &nbsp {{ this.status ||  discussion.status }} &nbsp 
                       </button>
                   </Button>
             </Dropdown>
+            <Button variant="solid" @click="showNewTaskDialog">
+              <template #prefix>
+                <LucidePlus class="h-4 w-4" />
+              </template>
+              Open popup
+            </Button>
+            <Button
+              variant="solid"
+              @click="$resources.addAssignee.submit()">
+              Add Assignee
+            </Button>
         </div>
       </div>
       <CommentsArea
@@ -232,7 +242,25 @@ import { copyToClipboard } from '@/utils'
 import { activeTeams } from '@/data/teams'
 import { getTeamProjects } from '@/data/projects'
 import TaskStatusIcon from '@/components/icons/TaskStatusIcon.vue'
-import { h } from 'vue'
+import { ref,h,computed } from 'vue'
+import { getUser } from '@/data/users'
+import { getCachedListResource, usePageMeta, Breadcrumbs } from 'frappe-ui'
+
+let newTaskDialog = ref(null)
+let listOptions = computed(() => ({
+  filters: { assigned_or_owner: getUser('sessionUser').name },
+}))
+
+function showNewTaskDialog() {
+  newTaskDialog.value.show({
+    defaults: {
+       assigned_to: getUser('sessionUser').name,
+    },
+    onSuccess: () => {
+      console.log("success")
+    },
+  })
+}
 
 export default {
   name: 'DiscussionView',
@@ -255,6 +283,19 @@ export default {
     RevisionsDialog,
   },
   resources: {
+    addAssignee: {
+      url: 'gameplan.api.add_assignee',
+      makeParams() {
+        // return {
+        //   emails: "muzammal.rasool1079@gmail.com",
+        //   name: "15",
+        // }
+      },
+      onSuccess() {
+        // this.$resetData()
+        // this.$resources.pendingInvitations.reload()
+      },
+    },
     discussion() {
       return {
         type: 'document',
@@ -368,6 +409,9 @@ export default {
             onClick: () => {
               this.status=status
               this.statusIcon=h(TaskStatusIcon, { status })
+              this.$resources.discussion.setValue.submit({
+                  status:this.status
+                })
             },
           }
         }
